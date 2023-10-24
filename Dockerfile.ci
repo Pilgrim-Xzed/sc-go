@@ -1,0 +1,12 @@
+# Docker file for github actions CI build
+FROM stablecog/ubuntu:22.04
+
+COPY ./server/server /app/server
+COPY ./cron/cron /app/cron
+COPY ./uploadapi/uploadapi /app/uploadapi
+COPY ./language/linguaapi /app/linguaapi
+COPY ./discobot/discobot /app/discobot
+
+EXPOSE 13337
+
+CMD ["/app/server"]

@@ -1,0 +1,1664 @@
+openapi: 3.0.3
+info:
+  title: Stablecog API
+  description: API Specification for stablecog
+  version: "2"
+servers:
+  - url: http://localhost:13337
+paths:
+  /v1/health:
+    get:
+      description: Server Health
+      responses:
+        "200":
+          description: Success code when server is ready to accept requests
+  /v1/stats:
+    get:
+      description: "Stats"
+      responses:
+        "200":
+          description: JSON object with gallery hits and metadata
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  upscale_output_count:
+                    type: integer
+                  generation_output_count:
+                    type: integer
+  /v1/gallery:
+    get:
+      description: "Gallery: Search"
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            format: optional, default:50
+          example: 1
+        - name: next
+          in: query
+          schema:
+            oneOf:
+              - type: string
+                format: isoTimeString, if search not specified
+              - type: integer
+                format: next cursor, if search specified
+          example: 2
+        - name: search
+          in: query
+          schema:
+            type: string
+            format: optional
+          example: A portrait of a cat by Van Gogh
+        - name: output_id
+          in: query
+          schema:
+            type: string
+            format: optional
+          description: "Query for a single output_id"
+      responses:
+        "200":
+          description: JSON object with gallery hits and metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GalleryResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse400"
+        "401":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse401"
+  /v1/user:
+    get:
+      description: "User: Retrieve Summary of User Data"
+      security:
+        - supabase: []
+      responses:
+        "200":
+          description: JSON object with general info about the requesting user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserSummaryResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse400"
+        "401":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse401"
+  /v1/admin/users:
+    get:
+      description: "User: Paginated Result (Admin-only)"
+      security:
+        - supabase: []
+      parameters:
+        - $ref: "#/components/parameters/perPageParam"
+        - $ref: "#/components/parameters/cursorParam"
+      responses:
+        "200":
+          description: JSON object with users and credits
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserQueryMeta"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse400"
+        "401":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse401"
+  /v1/admin/outputs:
+    delete:
+      description: "Generation Output: Mark for Delete (Admin)"
+      security:
+        - supabase: []
+      requestBody:
+        description: JSON Object with generation output IDs to delete
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeleteGenerationRequest"
+      responses:
+        "200":
+          description: Number of generations marked for deletion
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeletedResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse400"
+        "401":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse401"
+    get:
+      description: "Generation: Query with Outputs (Admin-only)"
+      security:
+        - supabase: []
+      parameters:
+        - $ref: "#/components/parameters/perPageParam"
+        - $ref: "#/components/parameters/cursorParam"
+        - $ref: "#/components/parameters/minWidthParam"
+        - $ref: "#/components/parameters/maxWidthParam"
+        - $ref: "#/components/parameters/minHeightParam"
+        - $ref: "#/components/parameters/maxHeightParam"
+        - $ref: "#/components/parameters/minInferenceStepsParam"
+        - $ref: "#/components/parameters/maxInferenceStepsParam"
+        - $ref: "#/components/parameters/minGuidanceScaleParam"
+        - $ref: "#/components/parameters/maxGuidanceScaleParam"
+        - $ref: "#/components/parameters/widthsParam"
+        - $ref: "#/components/parameters/heightsParam"
+        - $ref: "#/components/parameters/inferenceStepsParam"
+        - $ref: "#/components/parameters/guidanceScalesParam"
+        - $ref: "#/components/parameters/schedulerIdsParam"
+        - $ref: "#/components/parameters/modelIdsParam"
+        - $ref: "#/components/parameters/orderParam"
+        - $ref: "#/components/parameters/orderByParam"
+        - $ref: "#/components/parameters/upscaledParam"
+        - $ref: "#/components/parameters/galleryStatusParam"
+        - $ref: "#/components/parameters/startDtParam"
+        - $ref: "#/components/parameters/endDtParam"
+        - $ref: "#/components/parameters/isFavoritedParam"
+        - $ref: "#/components/parameters/wasAutoSubmittedParam"
+        - $ref: "#/components/parameters/searchParam"
+      responses:
+        "200":
+          description: JSON object with generations and outputs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerationQueryWithOutputsMeta"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse400"
+        "401":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse401"
+  /v1/user/outputs:
+    get:
+      description: "Generation: Query with Outputs (User-only)"
+      security:
+        - supabase: []
+      parameters:
+        - $ref: "#/components/parameters/perPageParam"
+        - $ref: "#/components/parameters/cursorParam"
+        - $ref: "#/components/parameters/minWidthParam"
+        - $ref: "#/components/parameters/maxWidthParam"
+        - $ref: "#/components/parameters/minHeightParam"
+        - $ref: "#/components/parameters/maxHeightParam"
+        - $ref: "#/components/parameters/minInferenceStepsParam"
+        - $ref: "#/components/parameters/maxInferenceStepsParam"
+        - $ref: "#/components/parameters/minGuidanceScaleParam"
+        - $ref: "#/components/parameters/maxGuidanceScaleParam"
+        - $ref: "#/components/parameters/widthsParam"
+        - $ref: "#/components/parameters/heightsParam"
+        - $ref: "#/components/parameters/inferenceStepsParam"
+        - $ref: "#/components/parameters/guidanceScalesParam"
+        - $ref: "#/components/parameters/schedulerIdsParam"
+        - $ref: "#/components/parameters/modelIdsParam"
+        - $ref: "#/components/parameters/orderParam"
+        - $ref: "#/components/parameters/orderByParam"
+        - $ref: "#/components/parameters/upscaledParam"
+        - $ref: "#/components/parameters/galleryStatusParam"
+        - $ref: "#/components/parameters/startDtParam"
+        - $ref: "#/components/parameters/endDtParam"
+        - $ref: "#/components/parameters/isFavoritedParam"
+        - $ref: "#/components/parameters/wasAutoSubmittedParam"
+        - $ref: "#/components/parameters/searchParam"
+      responses:
+        "200":
+          description: JSON object with generations and outputs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerationQueryWithOutputsMeta"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse400"
+        "401":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse401"
+  /v1/user/generation:
+    post:
+      description: "Generation: Create"
+      security:
+        - supabase: []
+      requestBody:
+        description: JSON object with generation options
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerationCreateInput"
+      responses:
+        "200":
+          description: JSON object with ID to track request via SSE stream
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse400"
+        "401":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse401"
+    delete:
+      description: "Generation: Mark for Delete (User)"
+      security:
+        - supabase: []
+      requestBody:
+        description: JSON Object with generation output IDs to delete
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeleteGenerationRequest"
+      responses:
+        "200":
+          description: Number of generations marked for deletion
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeletedResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse400"
+        "401":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse401"
+  /v1/user/email:
+    post:
+      description: "Email: Update Preference (User-only)"
+      security:
+        - supabase: []
+      requestBody:
+        description: JSON object with email preference
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                wants_email:
+                  type: boolean
+      responses:
+        "200":
+          description: JSON object updated count
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  updated:
+                    type: integer
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse400"
+        "401":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse401"
+    delete:
+      description: "Generation: Mark for Delete (User)"
+      security:
+        - supabase: []
+      requestBody:
+        description: JSON Object with generation output IDs to delete
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeleteGenerationRequest"
+      responses:
+        "200":
+          description: Number of generations marked for deletion
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeletedResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse400"
+        "401":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse401"
+  /v1/user/outputs/favorite:
+    put:
+      description: "Generation: Favorite (User)"
+      security:
+        - supabase: []
+      requestBody:
+        description: JSON object with output IDs and favorite options
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FavoriteOutputRequest"
+      responses:
+        "200":
+          description: JSON object count favorited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FavoritedResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse400"
+        "401":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse401"
+  /v1/user/upscale:
+    post:
+      description: "Upscale: Create"
+      security:
+        - supabase: []
+      requestBody:
+        description: JSON object with upscale options
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpscaleCreateInput"
+      responses:
+        "200":
+          description: JSON object with ID to track request via SSE stream
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse400"
+        "401":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse401"
+  /v1/admin/users/ban:
+    post:
+      description: "Ban/Unban Users (Admin-only)"
+      security:
+        - supabase: []
+      requestBody:
+        description: JSON object with action and user IDs
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BanUserInput"
+      responses:
+        "200":
+          description: "JSON object with updated count"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdatedResponse"
+  /v1/admin/credit/add:
+    post:
+      description: "Credits: Add to User (Admin-only)"
+      security:
+        - supabase: []
+      requestBody:
+        description: JSON object with credit type and user ID
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddCreditInput"
+      responses:
+        "200":
+          description: JSON object with array of credit types
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  added:
+                    type: boolean
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse400"
+        "401":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse401"
+  /v1/admin/credit/types:
+    get:
+      description: "Credits: Query Types (Admin-only)"
+      security:
+        - supabase: []
+      responses:
+        "200":
+          description: JSON object with array of credit types
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreditTypesQueryResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse400"
+        "401":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse401"
+  /v1/user/credits:
+    get:
+      description: "Credits: Query (User-only)"
+      security:
+        - supabase: []
+      responses:
+        "200":
+          description: JSON object with detailed credit information
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreditResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse400"
+        "401":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse401"
+  /v1/user/gallery:
+    put:
+      description: "Gallery: Submit (User-only)"
+      requestBody:
+        description: JSON Object with generation output IDs to submit
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitGalleryRequest"
+      responses:
+        "200":
+          description: JSON Object indicating how many items were submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubmittedResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse400"
+        "401":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse401"
+  /v1/user/tokens:
+    get:
+      description: "API Token: List (User-only)"
+      responses:
+        "200":
+          description: JSON Object with array of tokens
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tokens:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuidv4
+                        name:
+                          type: string
+                        short_string:
+                          type: string
+                        uses:
+                          type: integer
+                        credits_spent:
+                          type: integer
+                        is_active:
+                          type: boolean
+                        created_at:
+                          type: string
+                          format: date-time
+                        last_used_at:
+                          type: string
+                          format: date-time
+    post:
+      description: "API Token: Create (User-only)"
+      requestBody:
+        description: JSON Object
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        "200":
+          description: JSON Object with raw token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuidv4
+                  token:
+                    type: string
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    format: too_many_tokens
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse401"
+    delete:
+      description: "API Token: Delete/Deactivate (User-only)"
+      requestBody:
+        description: JSON Object with token ID
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuidv4
+      responses:
+        "200":
+          description: "Successful deactivation"
+        "404":
+          description: "Token not found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    format: token_not_found
+  /v1/user/operations:
+    get:
+      description: "Operations: List (User-only)"
+      security:
+        - supabase: []
+      parameters:
+        - $ref: "#/components/parameters/perPageParam"
+        - $ref: "#/components/parameters/cursorParam"
+      responses:
+        "200":
+          description: JSON Object next cursor and operations array
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationQueryResultMeta"
+  /v1/admin/gallery:
+    put:
+      description: "Gallery: Approve/Reject (Admin)"
+      security:
+        - supabase: []
+      requestBody:
+        description: JSON Object with review action and output IDs
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewGalleryRequest"
+      responses:
+        "200":
+          description: Number of items approved/rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdatedResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse400"
+        "401":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse401"
+  /v1/sse:
+    get:
+      description: "SSE: Subscribe"
+      parameters:
+        - name: id
+          in: query
+          schema:
+            type: string
+            format: 64_char_hex/live
+          example: live
+      responses:
+        "200":
+          description: On successful connection
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  version:
+                    type: string
+        "201":
+          description: Status update from worker to UI for generation/upscale created by user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkerStatusUpdate"
+        "202":
+          description: Update for live page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LivePageUpdate"
+  /v1/user/subscription/checkout:
+    post:
+      description: "Stripe: checkout new/upgraded subscription"
+      security:
+        - supabase: []
+      requestBody:
+        description: JSON Object with currency and target_price_id
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                currency:
+                  type: string
+                  format: usd, eur
+                target_price_id:
+                  type: string
+                  format: price ID
+                success_url:
+                  type: string
+                cancel_url:
+                  type: string
+      responses:
+        "200":
+          description: URL for new checkout session
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  checkout_url:
+                    type: string
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    format: invalid_price_id, invalid_currency, already_subscribed, cannot_downgrade, no_subscription
+        "401":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse401"
+  /v1/user/subscription/downgrade:
+    post:
+      description: "Stripe: downgrade subscription"
+      security:
+        - supabase: []
+      requestBody:
+        description: JSON Object with target_price_id
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                target_price_id:
+                  type: string
+                  format: price ID
+      responses:
+        "200":
+          description: Successfully downgraded subscription (updated in stripe)
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    format: invalid_price_id, no_active_subscription, not_lower
+        "401":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse401"
+  /v1/user/subscription/portal:
+    post:
+      description: "Stripe: customer portal"
+      security:
+        - supabase: []
+      requestBody:
+        description: JSON Object with return url
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                return_url:
+                  type: string
+      responses:
+        "200":
+          description: URL for new portal session
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customer_portal_url:
+                    type: string
+        "401":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse401"
+components:
+  securitySchemes:
+    supabase:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    perPageParam:
+      name: per_page
+      in: query
+      schema:
+        type: string
+        format: optional, default:50
+      example: "50"
+    cursorParam:
+      name: cursor
+      in: query
+      schema:
+        oneOf:
+          - type: string
+            format: isoTimeString, if search not specified
+          - type: integer
+            format: next cursor, if search specified
+      example: 2023-02-13T15%3A16%3A43.328Z
+    minWidthParam:
+      name: min_width
+      in: query
+      schema:
+        type: integer
+        format: optional
+      example: 512
+    maxWidthParam:
+      name: max_width
+      in: query
+      schema:
+        type: integer
+        format: optional
+      example: 512
+    minHeightParam:
+      name: min_height
+      in: query
+      schema:
+        type: integer
+        format: optional
+      example: 512
+    maxHeightParam:
+      name: max_height
+      in: query
+      schema:
+        type: integer
+        format: optional
+      example: 512
+    minInferenceStepsParam:
+      name: min_inference_steps
+      in: query
+      schema:
+        type: integer
+        format: optional
+      example: 30
+    maxInferenceStepsParam:
+      name: max_inference_steps
+      in: query
+      schema:
+        type: integer
+        format: optional
+      example: 30
+    minGuidanceScaleParam:
+      name: min_guidance_scale
+      in: query
+      schema:
+        type: number
+        format: float32, optional
+      example: 3.0
+    maxGuidanceScaleParam:
+      name: max_guidance_scale
+      in: query
+      schema:
+        type: number
+        format: float32, optional
+      example: 3
+    widthsParam:
+      name: widths
+      in: query
+      schema:
+        type: array
+        format: comma-separated, optional
+        items:
+          type: integer
+          format: int32
+      example: 512,768
+    heightsParam:
+      name: heights
+      in: query
+      schema:
+        type: array
+        format: comma-separated, optional
+        items:
+          type: integer
+          format: int32
+      example: 512,768
+    inferenceStepsParam:
+      name: inference_steps
+      in: query
+      schema:
+        type: array
+        format: comma-separated, optional
+        items:
+          type: integer
+          format: int32
+      example: 30,50
+    guidanceScalesParam:
+      name: guidance_scales
+      in: query
+      schema:
+        type: array
+        format: comma-separated, optional
+        items:
+          type: number
+          format: float32
+      example: 1,2.0
+    schedulerIdsParam:
+      name: scheduler_ids
+      in: query
+      schema:
+        type: array
+        format: comma-separated, optional
+        items:
+          type: string
+          format: uuidv4
+      example: e07ad712-41ad-4ff7-8727-faf0d91e4c4e,c09aaf4d-2d78-4281-89aa-88d5d0a5d70b
+    modelIdsParam:
+      name: model_ids
+      in: query
+      schema:
+        type: array
+        format: comma-separated, optional
+        items:
+          type: string
+          format: uuidv4
+      example: e07ad712-41ad-4ff7-8727-faf0d91e4c4e,c09aaf4d-2d78-4281-89aa-88d5d0a5d70b
+    orderParam:
+      name: order
+      in: query
+      schema:
+        type: string
+        format: "optional, asc/desc, default: desc"
+      example: 3
+    orderByParam:
+      name: order_by
+      in: query
+      schema:
+        type: string
+        format: "optional, created_at/updated_at, default: created_at"
+      example: updated_at
+    upscaledParam:
+      name: upscaled
+      in: query
+      schema:
+        type: string
+        format: "optional, any/only/not, default: any"
+      example: not (return not upscaled only)
+    galleryStatusParam:
+      name: gallery_status
+      in: query
+      schema:
+        type: array
+        format: comma-separated, optional, default all items
+        items:
+          type: string
+          format: not_submitted, submitted, accepted, rejected
+    startDtParam:
+      name: start_dt
+      in: query
+      schema:
+        type: string
+        format: "optional, isoTimeString"
+      example: 2023-02-15T22:41:39.841Z
+    endDtParam:
+      name: end_dt
+      in: query
+      schema:
+        type: string
+        format: "optional, isoTimeString"
+      example: 2023-02-15T22:41:39.841Z
+    isFavoritedParam:
+      name: is_favorited
+      in: query
+      schema:
+        type: boolean
+        format: "optional"
+    wasAutoSubmittedParam:
+      name: was_auto_submitted
+      in: query
+      schema:
+        type: boolean
+        format: "optional"
+    searchParam:
+      name: search
+      in: query
+      schema:
+        type: string
+        format: "optional"
+  schemas:
+    ErrorResponse400:
+      type: object
+      properties:
+        error:
+          type: string
+          format: insufficient_credits, json_parse_error, invalid_stream_id, invalid_model_id, invalid_scheduler_id, invalid_image_url, invalid_output_id, image_url_width_height_error, output_not_found, image_already_upscaled, queue_limit_reached
+    ErrorResponse401:
+      type: object
+      properties:
+        error:
+          type: string
+          format: unauthorized
+    GenerationCreateInput:
+      type: object
+      required:
+        [
+          "prompt",
+          "width",
+          "height",
+          "inference_steps",
+          "guidance_scale",
+          "model_id",
+          "scheduler_id",
+          "stream_id",
+        ]
+      properties:
+        prompt:
+          type: string
+        negative_prompt:
+          type: string
+        width:
+          type: integer
+          format: int32
+        height:
+          type: integer
+          format: int32
+        inference_steps:
+          type: integer
+          format: int32
+        guidance_scale:
+          type: number
+          format: float32
+        model_id:
+          type: string
+          format: uuidv4
+        scheduler_id:
+          type: string
+          format: uuidv4
+        seed:
+          type: integer
+          format: int64
+        stream_id:
+          type: string
+          format: 64_char_hex_string
+        submit_to_gallery:
+          type: boolean
+          default: false
+        num_outputs:
+          type: integer
+          format: int32
+          default: 1
+      description: Input for creating generation
+    UpscaleCreateInput:
+      type: object
+      required: ["type", "input", "model_id", "stream_id"]
+      properties:
+        type:
+          type: string
+          format: from_image/from_output
+        input:
+          type: string
+          format: URL if from_image, uuidv4 if from_output
+        model_id:
+          type: string
+          format: uuidv4
+        stream_id:
+          type: string
+          format: 64_char_hex_string
+      description: Input for creating upscale
+    CreateResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuidv4
+        total_remaining_credits:
+          type: integer
+      description: Response after creating a generation or upscale
+    PromptType:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuidv4
+        text:
+          type: string
+    GenerationQueryWithOutputsMeta:
+      type: object
+      properties:
+        total:
+          type: integer
+          format: int32, only if offset not includes
+        next:
+          oneOf:
+            - type: string
+              format: isoTimeString, if search not specified
+            - type: integer
+              format: next cursor, if search specified
+        outputs:
+          type: array
+          items:
+            $ref: "#/components/schemas/GenerationQueryResponse"
+    GenerationQueryResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuidv4
+        image_url:
+          type: string
+          format: optional
+        upscaled_image_url:
+          type: string
+          format: optional
+        gallery_status:
+          type: string
+          format: not_submitted/submitted/approved/rejected, optional
+        generation:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuidv4
+            width:
+              type: integer
+              format: int32
+            height:
+              type: integer
+              format: int32
+            inference_steps:
+              type: integer
+              format: int32
+            guidance_scale:
+              type: number
+              format: float32
+            model_id:
+              type: string
+              format: uuidv4
+            scheduler_id:
+              type: string
+              format: uuidv4
+            prompt:
+              type: object
+              $ref: "#/components/schemas/PromptType"
+            negative_prompt:
+              type: object
+              $ref: "#/components/schemas/PromptType"
+              format: optional
+            seed:
+              type: integer
+            created_at:
+              type: string
+              format: isoTimeString
+            started_at:
+              type: string
+              format: isoTimeString,optional
+            completed_at:
+              type: string
+              format: isoTimeString,optional
+            init_image_url:
+              type: string
+              format: optional
+            init_image_url_signed:
+              type: string
+              format: optional
+            outputs:
+              type: array
+              items:
+                $ref: "#/components/schemas/GenerationOutput"
+      description: Response after querying generations.
+    GenerationOutput:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuidv4
+        image_url:
+          type: string
+        upscaled_image_url:
+          type: string
+          format: optional
+        gallery_status:
+          type: string
+          format: not_submitted/submitted/approved/rejected
+        output_id:
+          type: string
+          format: uuidv4, optional, if upscale from_output
+        input_image_url:
+          type: string
+          format: optional, if upscale
+        is_favorited:
+          type: boolean
+        was_auto_submitted:
+          type: boolean
+      description: An output of a generation
+    CreditResponse:
+      type: object
+      properties:
+        total_remaining_credits:
+          type: integer
+          format: int32
+        credits:
+          type: array
+          items:
+            $ref: "#/components/schemas/Credit"
+      description: Detailed response from credit API
+    CreditType:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuidv4
+        name:
+          type: string
+        description:
+          type: string
+          format: optional
+        amount:
+          type: integer
+          format: int32
+      description: Details about the type of credit.
+    Credit:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuidv4
+        remaining_amount:
+          type: integer
+          format: int32
+        expires_at:
+          type: string
+          format: isoTimeString
+        type:
+          $ref: "#/components/schemas/CreditType"
+      description: Details about credits for user
+    SubmitGalleryRequest:
+      type: object
+      properties:
+        generation_output_ids:
+          type: array
+          items:
+            type: string
+            format: uuidv4
+    SubmittedResponse:
+      type: object
+      properties:
+        submitted:
+          type: integer
+      description: The number of items successfully submitted to gallery
+    FavoriteOutputRequest:
+      type: object
+      properties:
+        generation_output_ids:
+          type: array
+          items:
+            type: string
+            format: uuidv4
+        action:
+          type: string
+          format: add/remove
+    DeleteGenerationRequest:
+      type: object
+      properties:
+        generation_output_ids:
+          type: array
+          items:
+            type: string
+            format: uuidv4
+    FavoritedResponse:
+      type: object
+      properties:
+        favorited:
+          type: integer
+      description: The number of items successfully deleted
+    DeletedResponse:
+      type: object
+      properties:
+        deleted:
+          type: integer
+      description: The number of items successfully deleted
+    ReviewGalleryRequest:
+      type: object
+      properties:
+        action:
+          type: string
+          format: approve, reject
+        generation_output_ids:
+          type: array
+          items:
+            type: string
+            format: uuidv4
+    UpdatedResponse:
+      type: object
+      properties:
+        updated:
+          type: integer
+      description: The number of items successfully updated
+    WorkerStatusUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          format: succeeded, failed, processing
+        id:
+          type: string
+          format: uuidv4
+        process_type:
+          type: string
+          format: generate/upscale/generate_and_upscale
+        nsfw_count:
+          type: integer
+        error:
+          type: string
+          format: NSFW,<any>,optional
+        outputs:
+          type: array
+          items:
+            $ref: "#/components/schemas/GenerationOutput"
+        total_remaining_credits:
+          type: integer
+          format: optional, only if refunded
+      description: Status updates delivered from worker to UI via SSE
+    LivePageUpdate:
+      type: object
+      properties:
+        process_type:
+          type: string
+          format: generate, generate_and_upscale, upscale
+        id:
+          type: string
+        country_code:
+          type: string
+        status:
+          type: string
+          format: queued, succeeded, failed, processing
+        failure_reason:
+          type: string
+          format: NSFW
+        target_num_outputs:
+          type: integer
+        actual_num_outputs:
+          type: integer
+        nsfw_count:
+          type: integer
+        width:
+          type: integer
+          format: int32
+        height:
+          type: integer
+          format: int32
+        product_id:
+          type: string
+          format: stripe product ID, optional
+        created_at:
+          type: string
+          format: isoTimeString
+        started_at:
+          type: string
+          format: isoTimeString, optional
+        completed_at:
+          type: string
+          format: isoTimeString, optional
+        system_generated:
+          type: boolean
+      description: Status updates delivered for live activity page
+    UserSummaryResponse:
+      type: object
+      properties:
+        total_remaining_credits:
+          type: integer
+          format: int32
+        product:
+          type: string
+          format: stripe product ID, or empty if none
+        cancels_at:
+          type: string
+          format: isoTimeString, optional, only if cancel scheduled
+        renews_at:
+          type: string
+          format: isoTimeString, stripe renewal if subscribed, else free
+        has_nonfree_credits:
+          type: boolean
+        more_credits_at:
+          type: string
+          format: isoTimeString, optional, only if free & not at max credits
+        free_credit_amount:
+          type: integer
+        stripe_had_error:
+          type: boolean
+          format: If stripe API returned an unknown error code
+        roles:
+          type: array
+          items:
+            type: string
+        wants_email:
+          type: boolean
+          format: optional
+      description: Summary of user data
+    GalleryResponse:
+      type: object
+      properties:
+        page:
+          type: integer
+        next:
+          oneOf:
+            - type: string
+              format: isoTimeString, if search not specified
+            - type: integer
+              format: next cursor, if search specified
+        hits:
+          type: array
+          items:
+            type: object
+            properties:
+              image_url:
+                type: string
+                format: URL
+              upscaled_image_url:
+                type: string
+                format: URL, optional
+              width:
+                type: integer
+                format: int32
+              height:
+                type: integer
+                format: int32
+              inference_steps:
+                type: integer
+                format: int32
+              guidance_scale:
+                type: number
+                format: float32
+              seed:
+                type: integer
+              model_id:
+                type: string
+                format: uuidv4
+              scheduler_id:
+                type: string
+                format: uuidv4
+              prompt_text:
+                type: string
+              prompt_id:
+                type: string
+                format: uuidv4
+              negative_prompt_text:
+                type: string
+                format: optional
+              negative_prompt_id:
+                type: string
+                format: uuidv4
+              created_at:
+                type: string
+                format: isoTimeString
+              updated_at:
+                type: string
+                format: isoTimeString
+    UserQueryMeta:
+      type: object
+      properties:
+        total:
+          type: integer
+          format: int32, every registered user, only if offset not included
+        total_count_by_name:
+          type: object
+          additionalProperties:
+            type: integer
+          description: "key/value like 'credit_type_name: amount'"
+        next:
+          type: string
+          format: isoTimeString
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserQueryResponse"
+    UserQueryResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuidv4
+        email:
+          type: string
+        stripe_customer_id:
+          type: string
+        stripe_product_id:
+          type: string
+          format: optional
+        created_at:
+          type: string
+          format: isoTimeString
+        last_sign_in_at:
+          type: string
+          format: isoTimeString, optional
+        banned_at:
+          type: string
+          format: isoTimeString, optional
+        data_deleted_at:
+          type: string
+          format: isoTimeString, optional
+        scheduled_for_deletion_on:
+          type: string
+          format: isoTimeString, optional
+        roles:
+          type: array
+          items:
+            type: string
+            format: user role, SUPER_ADMIN/GALLERY_ADMIN
+        credits:
+          type: object
+          properties:
+            remaining_amount:
+              type: integer
+              format: int32
+            expires_at:
+              type: string
+              format: isoTimeString
+            credit_type:
+              type: object
+              properties:
+                name:
+                  type: string
+                stripe_product_id:
+                  type: string
+    CreditTypesQueryResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuidv4
+        name:
+          type: string
+        amount:
+          type: integer
+        description:
+          type: string
+          format: optional
+    AddCreditInput:
+      type: object
+      properties:
+        credit_type_id:
+          type: string
+          format: uuidv4
+        user_id:
+          type: string
+          format: uuidv4
+    BanUserInput:
+      type: object
+      properties:
+        action:
+          type: string
+          format: ban/unban
+        user_ids:
+          type: array
+          items:
+            type: string
+            format: uuidv4
+    OperationQueryResult:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuidv4
+        operation_type:
+          type: string
+          format: generate, upscale
+        created_at:
+          type: string
+          format: isoTimeString
+        started_at:
+          type: string
+          format: isoTimeString
+        completed_at:
+          type: string
+          format: isoTimeString
+        num_outputs:
+          type: integer
+          format: int32
+        source:
+          type: string
+          format: ui, api
+    OperationQueryResultMeta:
+      type: object
+      properties:
+        next:
+          type: string
+          format: isoTimeString, if search not specified
+        operations:
+          type: array
+          items:
+            $ref: "#/components/schemas/OperationQueryResult"

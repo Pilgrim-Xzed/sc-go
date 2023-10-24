@@ -1,0 +1,49 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: sc-auth-deployment
+  namespace: prod-stablecog
+  labels:
+    app: sc-auth
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: sc-auth
+  template:
+    metadata:
+      labels:
+        app: sc-auth
+    spec:
+      containers:
+        - name: sc-auth
+          image: replaceme
+          ports:
+            - containerPort: 9096
+          imagePullPolicy: "Always"
+          command: ["/bin/sh", "-c"]
+          args: ["/app/authapi"]
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 9096
+            initialDelaySeconds: 3
+            periodSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 9096
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          envFrom:
+            - secretRef:
+                name: sc-go
+          env:
+            - name: GOTRUE_URL
+              value: http://supabase-supabase-auth.prod-supabase:9999
+            - name: PUBLIC_SUPABASE_REFERENCE_ID
+              value: jaqefzjqokaemzyvjcew
+            - name: PRODUCTION
+              value: "true"
+            - name: OAUTH_REDIRECT_BASE
+              value: https://stablecog.com/account/apps/authorize

@@ -1,0 +1,7 @@
+{
+  "search.exclude": {
+    "database/ent/**": true,
+    "database/ent/schema": false,
+    "**/go.sum": true,
+  }
+}

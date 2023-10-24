@@ -1,0 +1,82 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: sc-lingua-deployment
+  namespace: prod-stablecog
+  labels:
+    app: sc-lingua
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: sc-lingua
+  template:
+    metadata:
+      labels:
+        app: sc-lingua
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: agentpool
+                    operator: In
+                    values:
+                      - a100
+      containers:
+        - name: sc-lingua
+          image: replaceme
+          ports:
+            - containerPort: 13339
+          imagePullPolicy: "Always"
+          command: ["/bin/sh", "-c"]
+          args: ["/app/linguaapi"]
+          readinessProbe:
+            httpGet:
+              path: /lingua/health
+              port: 13339
+            initialDelaySeconds: 3
+            periodSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /lingua/health
+              port: 13339
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          envFrom:
+            - secretRef:
+                name: sc-go
+          env:
+            - name: PUBLIC_SUPABASE_REFERENCE_ID
+              value: jaqefzjqokaemzyvjcew
+            - name: PRODUCTION
+              value: "true"
+            - name: BUCKET_BASE_URL
+              value: https://b.stablecog.com
+            - name: PUBLIC_API_URL
+              value: https://api.stablecog.com
+            - name: STRIPE_STARTER_PRODUCT_ID
+              value: prod_NTzD6l0KByWfLm
+            - name: STRIPE_PRO_PRODUCT_ID
+              value: prod_NTzCojAHPw6tbX
+            - name: STRIPE_ULTIMATE_PRODUCT_ID
+              value: prod_NTzE0C8bEuIv6F
+            - name: STRIPE_STARTER_PRICE_ID
+              value: price_1Mj1EqATa0ehBYTAw4xFqw2s
+            - name: STRIPE_PRO_PRICE_ID
+              value: price_1Mj1EZATa0ehBYTAMf839xbe
+            - name: STRIPE_ULTIMATE_PRICE_ID
+              value: price_1Mj1FfATa0ehBYTAD3iLwSav
+            - name: STRIPE_MEDIUM_PACK_PRICE_ID
+              value: price_1Mj1FjATa0ehBYTACkdGOPHR
+            - name: STRIPE_MEDIUM_PACK_PRODUCT_ID
+              value: prod_NTzEOBmfK1DFMs
+            - name: STRIPE_LARGE_PACK_PRICE_ID
+              value: price_1Mj1FpATa0ehBYTATTb8FzLg
+            - name: STRIPE_LARGE_PACK_PRODUCT_ID
+              value: prod_NTzE9KmD5wfCYn
+            - name: STRIPE_MEGA_PACK_PRICE_ID
+              value: price_1Mr4aEATa0ehBYTAalXOVpeg
+            - name: STRIPE_MEGA_PACK_PRODUCT_ID
+              value: prod_NcJCespFpjjQJj

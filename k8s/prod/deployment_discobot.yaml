@@ -1,0 +1,41 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: sc-discord-deployment
+  namespace: prod-stablecog
+  labels:
+    app: sc-discordbot
+spec:
+  strategy:
+    type: Recreate
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sc-discordbot
+  template:
+    metadata:
+      labels:
+        app: sc-discordbot
+    spec:
+      containers:
+        - name: sc-discordbot
+          image: replaceme
+          resources:
+            requests:
+              cpu: 100m
+              memory: 200Mi
+            limits:
+              memory: 2Gi
+          command: ["/bin/sh", "-c"]
+          args: ["/app/discobot"]
+          imagePullPolicy: "Always"
+          envFrom:
+            - secretRef:
+                name: sc-go
+          env:
+            - name: PUBLIC_API_URL
+              value: https://api.stablecog.com
+            - name: PUBLIC_SUPABASE_REFERENCE_ID
+              value: jaqefzjqokaemzyvjcew
+            - name: PRIVATE_LINGUA_API_URL
+              value: http://lingua-service.prod-stablecog:13339/lingua

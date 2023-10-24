@@ -1,0 +1,14 @@
+go 1.20
+
+use (
+	./auth
+	./cron
+	./database
+	./discobot
+	./language
+	./log
+	./server
+	./shared
+	./uploadapi
+	./utils
+)
