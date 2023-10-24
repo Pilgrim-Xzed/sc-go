@@ -54,7 +54,7 @@ spec:
           imagePullPolicy: "Always"
           envFrom:
             - secretRef:
-                name: sc-go
+                name: akscr
           env:
             - name: GOTRUE_URL
               value: http://supabase-supabase-auth.prod-supabase:9999
