@@ -39,5 +39,5 @@ spec:
               value: jaqefzjqokaemzyvjcew
             - name: PRIVATE_LINGUA_API_URL
               value: http://lingua-service.prod-stablecog:13339/lingua
-          imagePullSecrets:
-            - name: akscr
+      imagePullSecrets:
+        - name: akscr

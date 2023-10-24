@@ -90,5 +90,5 @@ spec:
               value: price_1Mr4aEATa0ehBYTAalXOVpeg
             - name: STRIPE_MEGA_PACK_PRODUCT_ID
               value: prod_NcJCespFpjjQJj
-          imagePullSecrets:
-            - name: akscr
+      imagePullSecrets:
+        - name: akscr

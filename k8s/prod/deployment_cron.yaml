@@ -42,5 +42,5 @@ spec:
               value: https://api.stablecog.com
             - name: BUCKET_BASE_URL
               value: https://b.stablecog.com
-          imagePullSecrets:
-            - name: akscr
+      imagePullSecrets:
+        - name: akscr
