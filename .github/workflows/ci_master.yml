@@ -37,18 +37,7 @@ jobs:
           go test -v -parallel 1 ./utils/...
           go test -v -parallel 1 ./uploadapi/...
 
-      - name: Send Discord Webhook
-        if: failure()
-        uses: ./.github/actions/discord-webhook
-        with:
-          context: prod
-          prod-webhook-url: ${{ secrets.DISCORD_WEBHOOK_PROD }}
-          qa-webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
-          embed-color: 15548997
-          embed-title: "${{ needs.setup_env.outputs.commit_msg }}  •  ${{ needs.setup_env.outputs.short_sha }}"
-          embed-description: "```Tests Failed```"
-
-
+    
 
 #  deploy_prod:
 #    name: 🚀 Deploy Apps (PROD)
