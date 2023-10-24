@@ -11,7 +11,7 @@ concurrency:
 jobs:
   setup_env:
     name: ⚙️ Setup environment
-    runs-on: self-hosted
+    runs-on: ubuntu-20.04
     steps:
       - name: Add SHORT_SHA env property
         run: echo "SHORT_SHA=`echo ${GITHUB_SHA::7}`" >> $GITHUB_ENV
@@ -30,7 +30,7 @@ jobs:
 
   test:
     name: ☔️ Tests
-    runs-on: self-hosted
+    runs-on: ubuntu-20.04
     needs: setup_env
 
     # Setup postgres service for tests
