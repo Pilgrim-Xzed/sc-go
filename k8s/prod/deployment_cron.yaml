@@ -20,6 +20,8 @@ spec:
       containers:
         - name: sc-cron
           image: replaceme
+      imagePullSecrets:
+        - name: akscr
           resources:
             requests:
               cpu: 100m

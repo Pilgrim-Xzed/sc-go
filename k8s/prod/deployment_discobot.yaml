@@ -20,6 +20,8 @@ spec:
       containers:
         - name: sc-discordbot
           image: replaceme
+      imagePullSecrets:
+        - name: akscr
           resources:
             requests:
               cpu: 100m
