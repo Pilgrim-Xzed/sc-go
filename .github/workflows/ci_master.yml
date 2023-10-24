@@ -30,7 +30,7 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-          
+
     steps:
       - name: Check out code
         uses: actions/checkout@v3
@@ -59,6 +59,17 @@ jobs:
           go test -v -parallel 1 ./utils/...
           go test -v -parallel 1 ./uploadapi/...
 
+      - name: Send Discord Webhook
+        if: failure()
+        uses: ./.github/actions/discord-webhook
+        with:
+          context: prod
+          prod-webhook-url: ${{ secrets.DISCORD_WEBHOOK_PROD }}
+          qa-webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
+          embed-color: 15548997
+          embed-title: "${{ needs.setup_env.outputs.commit_msg }}  •  ${{ needs.setup_env.outputs.short_sha }}"
+          embed-description: "```Tests Failed```"
+
   build:
     name: 🔨 Build Binaries and Docker Image
     runs-on: self-hosted
@@ -70,7 +81,17 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Set build start in env variable
-        run: echo "BUILD_START=$(date +%s)"
+        run: echo "BUILD_START=$(date +%s)" >> $GITHUB_ENV
+
+      - name: Send Discord Webhook
+        uses: ./.github/actions/discord-webhook
+        with:
+          context: prod
+          prod-webhook-url: ${{ secrets.DISCORD_WEBHOOK_PROD }}
+          qa-webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
+          embed-color: 16776960
+          embed-title: "${{ needs.setup_env.outputs.commit_msg }}  •  ${{ needs.setup_env.outputs.short_sha }}"
+          embed-description: "```Build Started```"
 
       - name: Setup Go with cache
         uses: actions/setup-go@v3
@@ -115,6 +136,16 @@ jobs:
           file: ./Dockerfile.ci
           tags: stablecog/sc-server:${{ needs.setup_env.outputs.branch_name }}-${{ env.GITHUB_RUN_ID }}
 
+      - name: Send Discord Webhook
+        if: failure()
+        uses: ./.github/actions/discord-webhook
+        with:
+          context: prod
+          prod-webhook-url: ${{ secrets.DISCORD_WEBHOOK_PROD }}
+          qa-webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
+          embed-color: 15548997
+          embed-title: "${{ needs.setup_env.outputs.commit_msg }}  •  ${{ needs.setup_env.outputs.short_sha }}"
+          embed-description: "```🚨 Build FAILED 🚨```"
 
 #  deploy_prod:
 #    name: 🚀 Deploy Apps (PROD)
