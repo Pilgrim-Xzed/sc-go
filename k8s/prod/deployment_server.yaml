@@ -23,8 +23,6 @@ spec:
       containers:
         - name: sc-server
           image: replaceme
-      imagePullSecrets:
-        - name: akscr
           resources:
             requests:
               cpu: 100m
