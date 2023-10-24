@@ -126,6 +126,13 @@ jobs:
         run: |
           cd discobot && go build -ldflags "-s -w -X main.Version=${{ needs.setup_env.outputs.short_sha }}" -o discobot && cd ..
 
+      - name: 'Docker Login'
+        uses: azure/docker-login@v1
+        with:
+          login-server: scogxx.azurecr.io
+          username: scogxx
+          password: g0OR5QbgcdhfOsxRgIttxQOKaRFf3NdXSrP6GslJfE+ACRDZBqbu
+
       - name: Build and push image
         if: success()
         uses: docker/build-push-action@v3
@@ -134,7 +141,7 @@ jobs:
           platforms: linux/amd64
           push: true
           file: ./Dockerfile.ci
-          tags: stablecog/sc-server:${{ needs.setup_env.outputs.branch_name }}-${{ env.GITHUB_RUN_ID }}
+          tags: scogxx.azurecr.io/sc-server:${{ needs.setup_env.outputs.branch_name }}-${{ env.GITHUB_RUN_ID }}
 
 
   # release_pull_request:
