@@ -158,7 +158,7 @@ jobs:
       - name: Deploy
         uses: ./.github/actions/k8s-deploy-aks
         with:
-          image: stablecog/sc-server:${{ needs.setup_env.outputs.branch_name}}-${{ env.GITHUB_RUN_ID }}
+          image: scogxx.azurecr.io/sc-server:${{ needs.setup_env.outputs.branch_name}}-${{ env.GITHUB_RUN_ID }}
           embed-title: "${{ needs.setup_env.outputs.commit_msg }}  •  ${{ needs.setup_env.outputs.short_sha }}"
           kube_config: ${{ secrets.KUBECONFIG }}
           env: prod
