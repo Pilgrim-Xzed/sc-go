@@ -32,7 +32,7 @@ spec:
           imagePullPolicy: "Always"
           envFrom:
             - secretRef:
-                name: akscr
+                name: sc-go
           env:
             - name: PUBLIC_SUPABASE_REFERENCE_ID
               value: jaqefzjqokaemzyvjcew

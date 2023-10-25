@@ -31,7 +31,7 @@ spec:
           imagePullPolicy: "Always"
           envFrom:
             - secretRef:
-                name: akscr
+                name: sc-go
           env:
             - name: PUBLIC_API_URL
               value: https://api.stablecog.com

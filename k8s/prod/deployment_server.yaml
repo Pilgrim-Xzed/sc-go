@@ -52,7 +52,7 @@ spec:
             periodSeconds: 10
           envFrom:
             - secretRef:
-                name: akscr
+                name: sc-go
           env:
             - name: GOTRUE_URL
               value: http://supabase-supabase-auth.prod-supabase:9999
