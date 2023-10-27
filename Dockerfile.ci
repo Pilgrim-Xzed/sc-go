@@ -1,7 +1,7 @@
 # Docker file for github actions CI build
 FROM stablecog/ubuntu:22.04
 
-COPY ./.env/.env /app/.env
+COPY .env /app/.env
 COPY ./server/server /app/server
 COPY ./cron/cron /app/cron
 COPY ./uploadapi/uploadapi /app/uploadapi
