@@ -7,7 +7,13 @@ COPY ./cron/cron /app/cron
 COPY ./uploadapi/uploadapi /app/uploadapi
 COPY ./language/linguaapi /app/linguaapi
 COPY ./discobot/discobot /app/discobot
+COPY ./database/. /app/database/.
 
 EXPOSE 13337
 
-CMD ["/app/server"]
+# Set the working directory to /app/database
+WORKDIR /app/database
+# Make the generate.sh script executable
+RUN chmod +x generate.sh
+
+CMD ["./generate.sh", "&&", "/app/server"]
