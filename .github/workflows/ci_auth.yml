@@ -2,7 +2,7 @@ name: 💫 CI (Auth API)
 
 on:
   push:
-    branches: [master]
+    branches: [auth]
     paths: ["auth/**", "k8s/auth/**"]
 
 concurrency:
