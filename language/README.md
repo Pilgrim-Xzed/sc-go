@@ -1,1 +1,1 @@
-# Lingua deployment b3!
+# Lingua deployment b3
