@@ -202,9 +202,9 @@ func main() {
 		if utils.GetEnv("DISCORD_WEBHOOK_URL", "") != "" {
 			s.Every(60).Seconds().Do(jobRunner.CheckHealth, jobs.NewJobLogger("HEALTH"))
 		}
-		s.Every(60).Seconds().Do(jobRunner.AddFreeCreditsToEligibleUsers, jobs.NewJobLogger("FREE_CREDITS"))
+		//s.Every(60).Seconds().Do(jobRunner.AddFreeCreditsToEligibleUsers, jobs.NewJobLogger("FREE_CREDITS"))
 		// Sync stripe
-		s.Every(10).Minutes().Do(jobRunner.SyncStripe, jobs.NewJobLogger("STRIPE_SYNC"))
+		//s.Every(10).Minutes().Do(jobRunner.SyncStripe, jobs.NewJobLogger("STRIPE_SYNC"))
 		// Clean up old redis queue items
 		s.Every(10).Minutes().Do(jobRunner.PruneOldQueueItems, jobs.NewJobLogger("RDQUEUE_CLEANUP"))
 		// cache update
@@ -216,7 +216,7 @@ func main() {
 			}
 		})
 		// Auto refund
-		s.Every(10).Minutes().Do(jobRunner.RefundOldGenerationCredits, jobs.NewJobLogger("AUTO_REFUND"))
+		//s.Every(10).Minutes().Do(jobRunner.RefundOldGenerationCredits, jobs.NewJobLogger("AUTO_REFUND"))
 		// Auto upscale
 		if !*disableAutoUpscale {
 			go jobRunner.StartAutoUpscaleJob(jobs.NewJobLogger("AUTO_UPSCALE"))
