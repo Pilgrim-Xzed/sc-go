@@ -123,7 +123,7 @@ func main() {
 	})
 
 	// Start server
-	port := utils.GetEnv("PORT", "13338")
+	port := "13338"
 	log.Info("Starting server", "port", port)
 
 	h2s := &http2.Server{}

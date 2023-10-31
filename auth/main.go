@@ -196,7 +196,7 @@ func main() {
 	s.StartAsync()
 
 	// Start server
-	port := utils.GetEnv("PORT", "9096")
+	port := "9096"
 	log.Info("Starting language server", "port", port)
 
 	h2s := &http2.Server{}
