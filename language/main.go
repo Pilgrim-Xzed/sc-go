@@ -20,7 +20,7 @@ var Version = "dev"
 func main() {
 	log.Infof("SC Language API: %s", Version)
 
-	// Load .env
+	// Load .envx
 	err := godotenv.Load("../.env")
 	if err != nil {
 		log.Warn("Error loading .env file (this is fine)", "err", err)
