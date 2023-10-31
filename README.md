@@ -1,5 +1,5 @@
 
-# stablecog/sc-go
+# stablecog/sc-go sever
 
 This is a multi-module workspace of various GO applications and packages used by [Stablecog](https://stablecog.com).
 
