@@ -6,7 +6,7 @@ metadata:
 spec:
   selector:
     app: sc-lingua
-  type: ClusterIP
+  type: NodePort
   ports:
     - port: 13339
       targetPort: 13339
