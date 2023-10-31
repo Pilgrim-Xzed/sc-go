@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   setup_env:
-    name: ⚙️ Setup environment
+    name: ⚙️ Setup auth environment
     runs-on: ubuntu-20.04
     steps:
       - name: Add SHORT_SHA env property
