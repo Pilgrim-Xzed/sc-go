@@ -10,7 +10,6 @@ import (
 	"github.com/stablecog/sc-go/language/shared"
 	"github.com/stablecog/sc-go/log"
 	"github.com/stablecog/sc-go/server/middleware"
-	"github.com/stablecog/sc-go/utils"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
