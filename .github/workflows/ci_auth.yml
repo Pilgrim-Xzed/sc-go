@@ -86,7 +86,7 @@ jobs:
       - name: Deploy
         uses: ./.github/actions/k8s-deploy-aks
         with:
-          image: stablecog/sc-auth:${{ needs.setup_env.outputs.branch_name}}-${{ env.GITHUB_RUN_ID }}
+          image: scogxx.azurecr.io/sc-auth:${{ needs.setup_env.outputs.branch_name}}-${{ env.GITHUB_RUN_ID }}
           embed-title: ""
           kube_config: ${{ secrets.KUBECONFIG }}
           env: auth
