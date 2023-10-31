@@ -21,12 +21,12 @@ metadata:
     nginx.ingress.kubernetes.io/session-cookie-expires: "172800"
     nginx.ingress.kubernetes.io/session-cookie-max-age: "172800"
 spec:
-  tls:
-    - hosts:
-        - api.stablecog.com
-      secretName: api-stablecog-com-server-secret-3
+  #tls:
+  #  - hosts:
+  #      - api.pesapay.app
+  #    secretName: api-stablecog-com-server-secret-3
   rules:
-    - host: api.stablecog.com
+    - host: api.pesapay.app
       http:
         paths:
           - path: /
