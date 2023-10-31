@@ -47,3 +47,5 @@ spec:
               value: "true"
             - name: OAUTH_REDIRECT_BASE
               value: https://stablecog.com/account/apps/authorize
+      imagePullSecrets:
+        - name: akscr
