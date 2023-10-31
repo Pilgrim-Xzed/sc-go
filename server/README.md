@@ -1,4 +1,4 @@
 # stablecog/sc-go/server
 
-# Changes Cluster IP to NodePort
+# Changes Node port to Load Balancer
 Collection of APIs used by [Stablecog](https://stablecog.com)

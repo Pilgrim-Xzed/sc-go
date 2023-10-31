@@ -6,7 +6,7 @@ metadata:
 spec:
   selector:
     app: sc-auth
-  type: NodePort
+  type: LoadBalancer
   ports:
     - port: 9096
       targetPort: 9096
