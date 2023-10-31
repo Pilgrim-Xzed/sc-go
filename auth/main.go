@@ -33,7 +33,7 @@ import (
 )
 
 func main() {
-	// Load .env files b3.ci
+	// Load .env files b3.ci g
 	err := godotenv.Load("../.env")
 	if err != nil {
 		log.Warn("Error loading .env file (this is fine)", "err", err)
