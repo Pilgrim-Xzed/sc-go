@@ -30,7 +30,7 @@ func main() {
 
 	app := chi.NewRouter()
 
-	// Create controller
+	// Create controllerx
 	hc := api.Controller{
 		LanguageDetector: detector,
 	}
