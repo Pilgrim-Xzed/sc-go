@@ -2,7 +2,7 @@ kind: Service
 apiVersion: v1
 metadata:
   name: server-service
-  namespace: prod-stablecog
+  namespace: ingress-nginx
 spec:
   selector:
     app: sc-server
@@ -15,7 +15,7 @@ kind: Service
 apiVersion: v1
 metadata:
   name: upload-service
-  namespace: prod-stablecog
+  namespace: ingress-nginx
 spec:
   selector:
     app: sc-uploadapi

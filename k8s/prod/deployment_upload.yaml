@@ -2,7 +2,7 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: sc-uploadapi-deployment
-  namespace: prod-stablecog
+  namespace: ingress-nginx
   labels:
     app: sc-uploadapi
 spec:

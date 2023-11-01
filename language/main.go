@@ -35,7 +35,7 @@ func main() {
 		LanguageDetector: detector,
 	}
 
-	// Routes
+	// Routesx
 	app.Route("/lingua", func(r chi.Router) {
 		// Lingua API
 		r.Route("/", func(r chi.Router) {

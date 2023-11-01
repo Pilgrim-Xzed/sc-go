@@ -2,7 +2,7 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: sc-discord-deployment
-  namespace: prod-stablecog
+  namespace: ingress-nginx
   labels:
     app: sc-discordbot
 spec:
