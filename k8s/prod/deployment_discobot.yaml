@@ -36,8 +36,8 @@ spec:
             - name: PUBLIC_API_URL
               value: https://api.stablecog.com
             - name: PUBLIC_SUPABASE_REFERENCE_ID
-              value: jaqefzjqokaemzyvjcew
+              value: ripcxiducccfionzyaqr
             - name: PRIVATE_LINGUA_API_URL
-              value: http://lingua-service.prod-stablecog:13339/lingua
+              value: http://20.208.24.162:13339/lingua/
       imagePullSecrets:
         - name: akscr

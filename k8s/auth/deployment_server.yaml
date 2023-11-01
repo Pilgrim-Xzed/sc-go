@@ -40,12 +40,12 @@ spec:
                 name: sc-go
           env:
             - name: GOTRUE_URL
-              value: http://supabase-supabase-auth.prod-supabase:9999
+              value: https://ripcxiducccfionzyaqr.supabase.co/auth/v1
             - name: PUBLIC_SUPABASE_REFERENCE_ID
-              value: jaqefzjqokaemzyvjcew
+              value: ripcxiducccfionzyaqr
             - name: PRODUCTION
               value: "true"
             - name: OAUTH_REDIRECT_BASE
-              value: https://stablecog.com/account/apps/authorize
+              value: https://stablecog-tau.vercel.app/account/apps/authorize
       imagePullSecrets:
         - name: akscr

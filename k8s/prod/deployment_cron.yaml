@@ -35,12 +35,12 @@ spec:
                 name: sc-go
           env:
             - name: PUBLIC_SUPABASE_REFERENCE_ID
-              value: jaqefzjqokaemzyvjcew
+              value: ripcxiducccfionzyaqr
             - name: PRODUCTION
               value: "true"
             - name: PUBLIC_API_URL
               value: https://api.stablecog.com
             - name: BUCKET_BASE_URL
-              value: https://b.stablecog.com
+              value: stablecog-gwhbg5cwgmgghtcp.z01.azurefd.net
       imagePullSecrets:
         - name: akscr

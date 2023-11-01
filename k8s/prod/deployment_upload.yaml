@@ -57,10 +57,10 @@ spec:
                 name: sc-go
           env:
             - name: GOTRUE_URL
-              value: http://supabase-supabase-auth.prod-supabase:9999
+              value: https://ripcxiducccfionzyaqr.supabase.co/auth/v1
             - name: PRODUCTION
               value: "true"
             - name: PUBLIC_SUPABASE_REFERENCE_ID
-              value: jaqefzjqokaemzyvjcew
+              value: ripcxiducccfionzyaqr
       imagePullSecrets:
         - name: akscr

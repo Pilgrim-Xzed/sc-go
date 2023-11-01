@@ -25,7 +25,7 @@ func main() {
 		log.Warn("Error loading .env file (this is fine)", "err", err)
 	}
 
-	// Setup language detector cog
+	// Setup language detector cogx
 	detector := shared.NewLanguageDetector()
 
 	app := chi.NewRouter()
