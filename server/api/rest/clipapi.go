@@ -34,7 +34,8 @@ func (c *RestAPI) HandleClipQSearch(w http.ResponseWriter, r *http.Request) {
 		Text: query,
 	}}
 
-	secret := os.Getenv("CLIPAPI_SECRET")
+	bstring := "Bearer "
+	secret := bstring + os.Getenv("CLIPAPI_SECRET")
 	endpoint := os.Getenv("CLIPAPI_ENDPOINT")
 
 	// Http POST to endpoint with secret
