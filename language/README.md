@@ -1,1 +1,1 @@
-# Lingua
+# Linguax
