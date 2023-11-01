@@ -39,13 +39,13 @@ spec:
             - secretRef:
                 name: sc-go
           env:
+            - name: PORT
+              value: "9096"
             - name: GOTRUE_URL
-              value: https://ripcxiducccfionzyaqr.supabase.co/auth/v1
+              value: http://supabase-supabase-auth.prod-supabase:9999
             - name: PUBLIC_SUPABASE_REFERENCE_ID
-              value: ripcxiducccfionzyaqr
+              value: jaqefzjqokaemzyvjcew
             - name: PRODUCTION
               value: "true"
             - name: OAUTH_REDIRECT_BASE
-              value: https://stablecog-tau.vercel.app/account/apps/authorize
-      imagePullSecrets:
-        - name: akscr
+              value: https://stablecog.com/account/apps/authorize

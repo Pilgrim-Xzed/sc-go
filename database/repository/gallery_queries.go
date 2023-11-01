@@ -8,6 +8,7 @@ import (
 	"github.com/stablecog/sc-go/database/ent"
 	"github.com/stablecog/sc-go/database/ent/generation"
 	"github.com/stablecog/sc-go/database/ent/generationoutput"
+	"github.com/stablecog/sc-go/database/ent/generationoutputlike"
 	"github.com/stablecog/sc-go/database/ent/negativeprompt"
 	"github.com/stablecog/sc-go/database/ent/prompt"
 	"github.com/stablecog/sc-go/database/ent/user"
@@ -17,7 +18,7 @@ import (
 )
 
 // Retrieved a single generation output by ID, in GalleryData format
-func (r *Repository) RetrieveGalleryDataByID(id uuid.UUID, userId *uuid.UUID, all bool) (*GalleryData, error) {
+func (r *Repository) RetrieveGalleryDataByID(id uuid.UUID, userId *uuid.UUID, callingUserId *uuid.UUID, all bool) (*GalleryData, error) {
 	var q *ent.GenerationOutputQuery
 	if userId != nil {
 		q = r.DB.Generation.Query().Where(generation.UserIDEQ(*userId)).QueryGenerationOutputs()
@@ -27,6 +28,11 @@ func (r *Repository) RetrieveGalleryDataByID(id uuid.UUID, userId *uuid.UUID, al
 	q = q.Where(generationoutput.IDEQ(id))
 	if !all {
 		q = q.Where(generationoutput.GalleryStatusEQ(generationoutput.GalleryStatusApproved))
+	}
+	if callingUserId != nil {
+		q = q.WithGenerationOutputLikes(func(gql *ent.GenerationOutputLikeQuery) {
+			gql.Where(generationoutputlike.LikedByUserID(*callingUserId))
+		})
 	}
 	output, err := q.WithGenerations(func(gq *ent.GenerationQuery) {
 		gq.WithPrompt()
@@ -38,7 +44,7 @@ func (r *Repository) RetrieveGalleryDataByID(id uuid.UUID, userId *uuid.UUID, al
 	}
 	data := GalleryData{
 		ID:             output.ID,
-		ImageURL:       utils.GetURLFromImagePath(output.ImagePath),
+		ImageURL:       utils.GetEnv().GetURLFromImagePath(output.ImagePath),
 		CreatedAt:      output.CreatedAt,
 		UpdatedAt:      output.UpdatedAt,
 		Width:          output.Edges.Generations.Width,
@@ -54,6 +60,8 @@ func (r *Repository) RetrieveGalleryDataByID(id uuid.UUID, userId *uuid.UUID, al
 		User: &UserType{
 			Username: output.Edges.Generations.Edges.User.Username,
 		},
+		LikeCount:   output.LikeCount,
+		LikedByUser: utils.ToPtr(len(output.Edges.GenerationOutputLikes) > 0),
 	}
 	if all {
 		data.IsPublic = output.IsPublic
@@ -64,12 +72,12 @@ func (r *Repository) RetrieveGalleryDataByID(id uuid.UUID, userId *uuid.UUID, al
 		data.NegativePromptText = output.Edges.Generations.Edges.NegativePrompt.Text
 	}
 	if output.UpscaledImagePath != nil {
-		data.UpscaledImageURL = utils.GetURLFromImagePath(*output.UpscaledImagePath)
+		data.UpscaledImageURL = utils.GetEnv().GetURLFromImagePath(*output.UpscaledImagePath)
 	}
 	return &data, nil
 }
 
-func (r *Repository) RetrieveMostRecentGalleryDataV2(filters *requests.QueryGenerationFilters, per_page int, cursor *time.Time) ([]GalleryData, *time.Time, error) {
+func (r *Repository) RetrieveMostRecentGalleryDataV2(filters *requests.QueryGenerationFilters, callingUserId *uuid.UUID, per_page int, cursor *time.Time) ([]GalleryData, *time.Time, error) {
 	// Base fields to select in our query
 	selectFields := []string{
 		generation.FieldID,
@@ -140,7 +148,7 @@ func (r *Repository) RetrieveMostRecentGalleryDataV2(filters *requests.QueryGene
 				s.C(generation.FieldUserID), ut.C(user.FieldID),
 			)
 		}
-		ltj.AppendSelect(sql.As(got.C(generationoutput.FieldID), "output_id"), sql.As(got.C(generationoutput.FieldGalleryStatus), "output_gallery_status"), sql.As(got.C(generationoutput.FieldImagePath), "image_path"), sql.As(got.C(generationoutput.FieldUpscaledImagePath), "upscaled_image_path"), sql.As(got.C(generationoutput.FieldDeletedAt), "deleted_at"), sql.As(got.C(generationoutput.FieldIsFavorited), "is_favorited"), sql.As(ut.C(user.FieldUsername), "username"), sql.As(got.C(generationoutput.FieldIsPublic), "is_public")).
+		ltj.AppendSelect(sql.As(got.C(generationoutput.FieldID), "output_id"), sql.As(got.C(generationoutput.FieldLikeCount), "like_count"), sql.As(got.C(generationoutput.FieldGalleryStatus), "output_gallery_status"), sql.As(got.C(generationoutput.FieldImagePath), "image_path"), sql.As(got.C(generationoutput.FieldUpscaledImagePath), "upscaled_image_path"), sql.As(got.C(generationoutput.FieldDeletedAt), "deleted_at"), sql.As(got.C(generationoutput.FieldIsFavorited), "is_favorited"), sql.As(ut.C(user.FieldUsername), "username"), sql.As(got.C(generationoutput.FieldIsPublic), "is_public")).
 			GroupBy(s.C(generation.FieldID),
 				got.C(generationoutput.FieldID), got.C(generationoutput.FieldGalleryStatus),
 				got.C(generationoutput.FieldImagePath), got.C(generationoutput.FieldUpscaledImagePath),
@@ -227,12 +235,30 @@ func (r *Repository) RetrieveMostRecentGalleryDataV2(filters *requests.QueryGene
 		nextCursor = &gQueryResult[len(gQueryResult)-1].CreatedAt
 	}
 
+	// Figure out liked by in another query, if calling user is provided
+	likedByMap := make(map[uuid.UUID]struct{})
+	if callingUserId != nil {
+		outputIds := make([]uuid.UUID, len(gQueryResult))
+		for i, g := range gQueryResult {
+			outputIds[i] = *g.OutputID
+		}
+		likedByMap, err = r.GetGenerationOutputsLikedByUser(*callingUserId, outputIds)
+		if err != nil {
+			log.Error("Error getting liked by map", "err", err)
+			return nil, nil, err
+		}
+	}
+
 	galleryData := make([]GalleryData, len(gQueryResult))
 	for i, g := range gQueryResult {
+		likedByUser := false
+		if _, ok := likedByMap[*g.OutputID]; ok {
+			likedByUser = true
+		}
 		promptText, _ := promptIDsMap[*g.PromptID]
 		galleryData[i] = GalleryData{
 			ID:             *g.OutputID,
-			ImageURL:       utils.GetURLFromImagePath(g.ImageUrl),
+			ImageURL:       utils.GetEnv().GetURLFromImagePath(g.ImageUrl),
 			CreatedAt:      g.CreatedAt,
 			UpdatedAt:      g.UpdatedAt,
 			Width:          g.Width,
@@ -250,6 +276,8 @@ func (r *Repository) RetrieveMostRecentGalleryDataV2(filters *requests.QueryGene
 			},
 			WasAutoSubmitted: g.WasAutoSubmitted,
 			IsPublic:         g.IsPublic,
+			LikeCount:        g.LikeCount,
+			LikedByUser:      utils.ToPtr(likedByUser),
 		}
 
 		if g.NegativePromptID != nil {
@@ -258,7 +286,7 @@ func (r *Repository) RetrieveMostRecentGalleryDataV2(filters *requests.QueryGene
 		}
 
 		if g.UpscaledImageUrl != "" {
-			galleryData[i].UpscaledImageURL = utils.GetURLFromImagePath(g.UpscaledImageUrl)
+			galleryData[i].UpscaledImageURL = utils.GetEnv().GetURLFromImagePath(g.UpscaledImageUrl)
 		}
 	}
 
@@ -267,7 +295,7 @@ func (r *Repository) RetrieveMostRecentGalleryDataV2(filters *requests.QueryGene
 
 // Retrieves data in gallery format given  output IDs
 // Returns data, next cursor, error
-func (r *Repository) RetrieveMostRecentGalleryData(filters *requests.QueryGenerationFilters, per_page int, cursor *time.Time) ([]GalleryData, *time.Time, error) {
+func (r *Repository) RetrieveMostRecentGalleryData(filters *requests.QueryGenerationFilters, callingUserId *uuid.UUID, per_page int, cursor *time.Time) ([]GalleryData, *time.Time, error) {
 	// Apply filters
 	queryG := r.DB.Generation.Query().Where(
 		generation.StatusEQ(generation.StatusSucceeded),
@@ -292,6 +320,11 @@ func (r *Repository) RetrieveMostRecentGalleryData(filters *requests.QueryGenera
 		if filters.IsPublic != nil {
 			query = query.Where(generationoutput.IsPublic(*filters.IsPublic))
 		}
+	}
+	if callingUserId != nil {
+		query = query.WithGenerationOutputLikes(func(gql *ent.GenerationOutputLikeQuery) {
+			gql.Where(generationoutputlike.LikedByUserID(*callingUserId))
+		})
 	}
 	query = query.WithGenerations(func(s *ent.GenerationQuery) {
 		s.WithPrompt()
@@ -320,7 +353,7 @@ func (r *Repository) RetrieveMostRecentGalleryData(filters *requests.QueryGenera
 	for i, output := range res {
 		data := GalleryData{
 			ID:             output.ID,
-			ImageURL:       utils.GetURLFromImagePath(output.ImagePath),
+			ImageURL:       utils.GetEnv().GetURLFromImagePath(output.ImagePath),
 			CreatedAt:      output.CreatedAt,
 			UpdatedAt:      output.UpdatedAt,
 			Width:          output.Edges.Generations.Width,
@@ -336,9 +369,11 @@ func (r *Repository) RetrieveMostRecentGalleryData(filters *requests.QueryGenera
 			User: &UserType{
 				Username: output.Edges.Generations.Edges.User.Username,
 			},
+			LikeCount:   output.LikeCount,
+			LikedByUser: utils.ToPtr(len(output.Edges.GenerationOutputLikes) > 0),
 		}
 		if output.UpscaledImagePath != nil {
-			data.UpscaledImageURL = utils.GetURLFromImagePath(*output.UpscaledImagePath)
+			data.UpscaledImageURL = utils.GetEnv().GetURLFromImagePath(*output.UpscaledImagePath)
 		}
 		if output.Edges.Generations.Edges.NegativePrompt != nil {
 			data.NegativePromptText = output.Edges.Generations.Edges.NegativePrompt.Text
@@ -351,12 +386,17 @@ func (r *Repository) RetrieveMostRecentGalleryData(filters *requests.QueryGenera
 }
 
 // Retrieves data in gallery format given  output IDs
-func (r *Repository) RetrieveGalleryDataWithOutputIDs(outputIDs []uuid.UUID, allIsPublic bool) ([]GalleryData, error) {
+func (r *Repository) RetrieveGalleryDataWithOutputIDs(outputIDs []uuid.UUID, callingUserId *uuid.UUID, allIsPublic bool) ([]GalleryData, error) {
 	q := r.DB.GenerationOutput.Query().Where(generationoutput.IDIn(outputIDs...))
 	if allIsPublic {
 		q = q.Where(generationoutput.IsPublic(true))
 	} else {
 		q = q.Where(generationoutput.GalleryStatusEQ(generationoutput.GalleryStatusApproved))
+	}
+	if callingUserId != nil {
+		q = q.WithGenerationOutputLikes(func(gql *ent.GenerationOutputLikeQuery) {
+			gql.Where(generationoutputlike.LikedByUserID(*callingUserId))
+		})
 	}
 	res, err := q.
 		WithGenerations(func(gq *ent.GenerationQuery) {
@@ -373,7 +413,7 @@ func (r *Repository) RetrieveGalleryDataWithOutputIDs(outputIDs []uuid.UUID, all
 	for i, output := range res {
 		data := GalleryData{
 			ID:             output.ID,
-			ImageURL:       utils.GetURLFromImagePath(output.ImagePath),
+			ImageURL:       utils.GetEnv().GetURLFromImagePath(output.ImagePath),
 			CreatedAt:      output.CreatedAt,
 			UpdatedAt:      output.UpdatedAt,
 			Width:          output.Edges.Generations.Width,
@@ -389,9 +429,11 @@ func (r *Repository) RetrieveGalleryDataWithOutputIDs(outputIDs []uuid.UUID, all
 			User: &UserType{
 				Username: output.Edges.Generations.Edges.User.Username,
 			},
+			LikeCount:   output.LikeCount,
+			LikedByUser: utils.ToPtr(len(output.Edges.GenerationOutputLikes) > 0),
 		}
 		if output.UpscaledImagePath != nil {
-			data.UpscaledImageURL = utils.GetURLFromImagePath(*output.UpscaledImagePath)
+			data.UpscaledImageURL = utils.GetEnv().GetURLFromImagePath(*output.UpscaledImagePath)
 		}
 		if output.Edges.Generations.Edges.NegativePrompt != nil {
 			data.NegativePromptText = output.Edges.Generations.Edges.NegativePrompt.Text
@@ -426,4 +468,6 @@ type GalleryData struct {
 	PromptStrength     *float32   `json:"prompt_strength,omitempty" sql:"prompt_strength"`
 	WasAutoSubmitted   bool       `json:"was_auto_submitted" sql:"was_auto_submitted"`
 	IsPublic           bool       `json:"is_public" sql:"is_public"`
+	LikeCount          int        `json:"like_count" sql:"like_count"`
+	LikedByUser        *bool      `json:"liked_by_user,omitempty" sql:"liked_by_user"`
 }

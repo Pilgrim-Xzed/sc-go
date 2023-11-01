@@ -1,7 +1,6 @@
 # Docker file for github actions CI build
 FROM stablecog/ubuntu:22.04
 
-COPY .env /app/../.env
 COPY ./auth/authapi /app/authapi
 
 EXPOSE 9096

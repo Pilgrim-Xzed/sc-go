@@ -6,7 +6,7 @@ metadata:
 spec:
   selector:
     app: sc-lingua
-  type: LoadBalancer
+  type: ClusterIP
   ports:
     - port: 13339
       targetPort: 13339

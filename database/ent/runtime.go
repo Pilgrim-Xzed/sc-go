@@ -16,6 +16,7 @@ import (
 	"github.com/stablecog/sc-go/database/ent/generation"
 	"github.com/stablecog/sc-go/database/ent/generationmodel"
 	"github.com/stablecog/sc-go/database/ent/generationoutput"
+	"github.com/stablecog/sc-go/database/ent/generationoutputlike"
 	"github.com/stablecog/sc-go/database/ent/ipblacklist"
 	"github.com/stablecog/sc-go/database/ent/mqlog"
 	"github.com/stablecog/sc-go/database/ent/negativeprompt"
@@ -208,20 +209,24 @@ func init() {
 	generationmodelDescIsHidden := generationmodelFields[4].Descriptor()
 	// generationmodel.DefaultIsHidden holds the default value on creation for the is_hidden field.
 	generationmodel.DefaultIsHidden = generationmodelDescIsHidden.Default.(bool)
+	// generationmodelDescDisplayWeight is the schema descriptor for display_weight field.
+	generationmodelDescDisplayWeight := generationmodelFields[5].Descriptor()
+	// generationmodel.DefaultDisplayWeight holds the default value on creation for the display_weight field.
+	generationmodel.DefaultDisplayWeight = generationmodelDescDisplayWeight.Default.(int32)
 	// generationmodelDescDefaultWidth is the schema descriptor for default_width field.
-	generationmodelDescDefaultWidth := generationmodelFields[6].Descriptor()
+	generationmodelDescDefaultWidth := generationmodelFields[7].Descriptor()
 	// generationmodel.DefaultDefaultWidth holds the default value on creation for the default_width field.
 	generationmodel.DefaultDefaultWidth = generationmodelDescDefaultWidth.Default.(int32)
 	// generationmodelDescDefaultHeight is the schema descriptor for default_height field.
-	generationmodelDescDefaultHeight := generationmodelFields[7].Descriptor()
+	generationmodelDescDefaultHeight := generationmodelFields[8].Descriptor()
 	// generationmodel.DefaultDefaultHeight holds the default value on creation for the default_height field.
 	generationmodel.DefaultDefaultHeight = generationmodelDescDefaultHeight.Default.(int32)
 	// generationmodelDescCreatedAt is the schema descriptor for created_at field.
-	generationmodelDescCreatedAt := generationmodelFields[8].Descriptor()
+	generationmodelDescCreatedAt := generationmodelFields[9].Descriptor()
 	// generationmodel.DefaultCreatedAt holds the default value on creation for the created_at field.
 	generationmodel.DefaultCreatedAt = generationmodelDescCreatedAt.Default.(func() time.Time)
 	// generationmodelDescUpdatedAt is the schema descriptor for updated_at field.
-	generationmodelDescUpdatedAt := generationmodelFields[9].Descriptor()
+	generationmodelDescUpdatedAt := generationmodelFields[10].Descriptor()
 	// generationmodel.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	generationmodel.DefaultUpdatedAt = generationmodelDescUpdatedAt.Default.(func() time.Time)
 	// generationmodel.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -244,12 +249,16 @@ func init() {
 	generationoutputDescIsPublic := generationoutputFields[6].Descriptor()
 	// generationoutput.DefaultIsPublic holds the default value on creation for the is_public field.
 	generationoutput.DefaultIsPublic = generationoutputDescIsPublic.Default.(bool)
+	// generationoutputDescLikeCount is the schema descriptor for like_count field.
+	generationoutputDescLikeCount := generationoutputFields[7].Descriptor()
+	// generationoutput.DefaultLikeCount holds the default value on creation for the like_count field.
+	generationoutput.DefaultLikeCount = generationoutputDescLikeCount.Default.(int)
 	// generationoutputDescCreatedAt is the schema descriptor for created_at field.
-	generationoutputDescCreatedAt := generationoutputFields[9].Descriptor()
+	generationoutputDescCreatedAt := generationoutputFields[10].Descriptor()
 	// generationoutput.DefaultCreatedAt holds the default value on creation for the created_at field.
 	generationoutput.DefaultCreatedAt = generationoutputDescCreatedAt.Default.(func() time.Time)
 	// generationoutputDescUpdatedAt is the schema descriptor for updated_at field.
-	generationoutputDescUpdatedAt := generationoutputFields[10].Descriptor()
+	generationoutputDescUpdatedAt := generationoutputFields[11].Descriptor()
 	// generationoutput.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	generationoutput.DefaultUpdatedAt = generationoutputDescUpdatedAt.Default.(func() time.Time)
 	// generationoutput.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -258,6 +267,16 @@ func init() {
 	generationoutputDescID := generationoutputFields[0].Descriptor()
 	// generationoutput.DefaultID holds the default value on creation for the id field.
 	generationoutput.DefaultID = generationoutputDescID.Default.(func() uuid.UUID)
+	generationoutputlikeFields := schema.GenerationOutputLike{}.Fields()
+	_ = generationoutputlikeFields
+	// generationoutputlikeDescCreatedAt is the schema descriptor for created_at field.
+	generationoutputlikeDescCreatedAt := generationoutputlikeFields[3].Descriptor()
+	// generationoutputlike.DefaultCreatedAt holds the default value on creation for the created_at field.
+	generationoutputlike.DefaultCreatedAt = generationoutputlikeDescCreatedAt.Default.(func() time.Time)
+	// generationoutputlikeDescID is the schema descriptor for id field.
+	generationoutputlikeDescID := generationoutputlikeFields[0].Descriptor()
+	// generationoutputlike.DefaultID holds the default value on creation for the id field.
+	generationoutputlike.DefaultID = generationoutputlikeDescID.Default.(func() uuid.UUID)
 	ipblacklistFields := schema.IPBlackList{}.Fields()
 	_ = ipblacklistFields
 	// ipblacklistDescCreatedAt is the schema descriptor for created_at field.

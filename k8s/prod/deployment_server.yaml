@@ -55,17 +55,19 @@ spec:
                 name: sc-go
           env:
             - name: GOTRUE_URL
-              value: https://ripcxiducccfionzyaqr.supabase.co/auth/v1
+              value: http://supabase-supabase-auth.prod-supabase:9999
             - name: PUBLIC_SUPABASE_REFERENCE_ID
-              value: ripcxiducccfionzyaqr
+              value: jaqefzjqokaemzyvjcew
             - name: PRODUCTION
               value: "true"
+            - name: PORT
+              value: "13337"
             - name: BUCKET_BASE_URL
-              value: stablecog-gwhbg5cwgmgghtcp.z01.azurefd.net
+              value: https://b.stablecog.com
             - name: PUBLIC_API_URL
               value: https://api.stablecog.com
             - name: PRIVATE_LINGUA_API_URL
-              value: http://20.208.24.162:13339/lingua/
+              value: http://lingua-service.prod-stablecog:13339/lingua
             - name: STRIPE_STARTER_PRODUCT_ID
               value: prod_NTzD6l0KByWfLm
             - name: STRIPE_PRO_PRODUCT_ID
@@ -90,5 +92,3 @@ spec:
               value: price_1Mr4aEATa0ehBYTAalXOVpeg
             - name: STRIPE_MEGA_PACK_PRODUCT_ID
               value: prod_NcJCespFpjjQJj
-      imagePullSecrets:
-        - name: akscr

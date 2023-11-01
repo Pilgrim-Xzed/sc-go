@@ -33,7 +33,7 @@ import (
 )
 
 func main() {
-	// Load .env files b3.ci gfxx
+	// Load .env
 	err := godotenv.Load("../.env")
 	if err != nil {
 		log.Warn("Error loading .env file (this is fine)", "err", err)
@@ -79,7 +79,7 @@ func main() {
 	apiWrapper := &api.ApiWrapper{
 		RedisStore:   redisStore,
 		SupabaseAuth: database.NewSupabaseAuth(),
-		AesCrypt:     utils.NewAesCrypt(os.Getenv("DATA_ENCRYPTION_PASSWORD")),
+		AesCrypt:     utils.NewAesCrypt(utils.GetEnv().DataEncryptionPassword),
 		DB:           entClient,
 		Repo:         repo,
 	}
@@ -101,7 +101,7 @@ func main() {
 
 	// Cors middleware
 	app.Use(cors.Handler(cors.Options{
-		AllowedOrigins: utils.GetCorsOrigins(),
+		AllowedOrigins: utils.GetEnv().GetCorsOrigins(),
 		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"*"},
@@ -197,11 +197,11 @@ func main() {
 
 	// Start server
 	port := "9096"
-	log.Info("Starting language server", "port", port)
+	log.Info("Starting Auth server", "port", port)
 
 	h2s := &http2.Server{}
 	authSrv := &http.Server{
-		Addr:    fmt.Sprintf(":%s", port),
+		Addr:    fmt.Sprintf(":%d", port),
 		Handler: h2c.NewHandler(app, h2s),
 	}
 

@@ -80,13 +80,16 @@ func (t *CreateGenerationRequest) Validate(api bool) error {
 	}
 
 	t.ApplyDefaults()
+	fmt.Println("Generation requested!")
+	fmt.Printf("MOdel ID %s\n", (*t.ModelId).String())
+	fmt.Printf("Scheduler ID %s\n", (*t.SchedulerId).String())
 
 	// Only apply scheduler check to API for now
 	if api {
 		compatibleSchedulerIds := shared.GetCache().GetCompatibleSchedulerIDsForModel(context.TODO(), *t.ModelId)
 		if !slices.Contains(compatibleSchedulerIds, *t.SchedulerId) {
-			fmt.Printf("MOdel ID %s", (*t.ModelId).String())
-			fmt.Printf("Scheduler ID %s", (*t.SchedulerId).String())
+			fmt.Printf("MOdel ID %s\n", (*t.ModelId).String())
+			fmt.Printf("Scheduler ID %s\n", (*t.SchedulerId).String())
 			return errors.New("invalid_scheduler_id")
 		}
 	}
@@ -135,7 +138,8 @@ func (t *CreateGenerationRequest) Validate(api bool) error {
 	}
 
 	if !shared.GetCache().IsValidGenerationModelID(*t.ModelId) {
-		return errors.New("invalid_model_id")
+		fmt.Printf("MOdel ID %s\n", (*t.ModelId).String())
+		return fmt.Errorf("Invalid model id: %s", (*t.ModelId).String())
 	}
 
 	if !shared.GetCache().IsValidShedulerID(*t.SchedulerId) {

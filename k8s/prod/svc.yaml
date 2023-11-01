@@ -6,7 +6,7 @@ metadata:
 spec:
   selector:
     app: sc-server
-  type: LoadBalancer
+  type: ClusterIP
   ports:
     - port: 13337
       targetPort: 13337
@@ -19,7 +19,7 @@ metadata:
 spec:
   selector:
     app: sc-uploadapi
-  type: LoadBalancer
+  type: ClusterIP
   ports:
     - port: 13338
       targetPort: 13338

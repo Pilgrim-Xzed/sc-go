@@ -25,7 +25,7 @@ func main() {
 		log.Warn("Error loading .env file (this is fine)", "err", err)
 	}
 
-	// Setup language detector cogx
+	// Setup language detector
 	detector := shared.NewLanguageDetector()
 
 	app := chi.NewRouter()
@@ -53,7 +53,7 @@ func main() {
 
 	h2s := &http2.Server{}
 	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%s", port),
+		Addr:    fmt.Sprintf(":%d", port),
 		Handler: h2c.NewHandler(app, h2s),
 	}
 

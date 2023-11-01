@@ -146,7 +146,7 @@ func (c *DiscordInteractionWrapper) NewImageCommand() *DiscordInteraction {
 				var negativePrompt string
 				var modelId *uuid.UUID
 				var aspectRatio *aspectratio.AspectRatio
-				numOutputs := 4
+				numOutputs := int(shared.DEFAULT_GENERATE_NUM_OUTPUTS)
 
 				// Attachment of init image
 				var attachmentId string
@@ -368,7 +368,7 @@ func (c *DiscordInteractionWrapper) HandleUpscaleGeneration(s *discordgo.Session
 		if existingOutput.UpscaledImagePath != nil {
 			// Send the image
 			err = responses.InitialInteractionResponse(s, i, &responses.InteractionResponseOptions{
-				Content: utils.ToPtr(fmt.Sprintf("<@%s> ✨ Image has already been upscaled #%d \n%s", discordUserId, number, utils.GetURLFromImagePath(*existingOutput.UpscaledImagePath))),
+				Content: utils.ToPtr(fmt.Sprintf("<@%s> ✨ Image has already been upscaled #%d \n%s", discordUserId, number, utils.GetEnv().GetURLFromImagePath(*existingOutput.UpscaledImagePath))),
 				Embeds:  nil,
 				Privacy: responses.PRIVATE,
 			})

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -469,7 +468,7 @@ func (c *RestAPI) HandleQueryGenerations(w http.ResponseWriter, r *http.Request)
 				prefixRemoved := g.Generation.InitImageURL[5:]
 				// Sign object URL to pass to worker
 				req, _ := c.S3.GetObjectRequest(&s3.GetObjectInput{
-					Bucket: aws.String(os.Getenv("S3_IMG2IMG_BUCKET_NAME")),
+					Bucket: aws.String(utils.GetEnv().S3Img2ImgBucketName),
 					Key:    aws.String(prefixRemoved),
 				})
 				urlStr, err := req.Presign(1 * time.Hour)
@@ -729,5 +728,44 @@ func (c *RestAPI) HandleUpdateUsername(w http.ResponseWriter, r *http.Request) {
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]interface{}{
 		"username": usernameReq.Username,
+	})
+}
+
+// HTTP POST - like/unlike generation
+func (c *RestAPI) HandleLikeGenerationOutputsForUser(w http.ResponseWriter, r *http.Request) {
+	var user *ent.User
+	if user = c.GetUserIfAuthenticated(w, r); user == nil {
+		return
+	}
+
+	if user.BannedAt != nil {
+		responses.ErrForbidden(w, r)
+		return
+	}
+
+	// Parse request body
+	reqBody, _ := io.ReadAll(r.Body)
+	var likeReq requests.LikeUnlikeActionRequest
+	err := json.Unmarshal(reqBody, &likeReq)
+	if err != nil {
+		responses.ErrUnableToParseJson(w, r)
+		return
+	}
+
+	if likeReq.Action != requests.LikeAction && likeReq.Action != requests.UnlikeAction {
+		responses.ErrBadRequest(w, r, "action must be either 'like' or 'unlike'", "")
+		return
+	}
+
+	err = c.Repo.SetOutputsLikedForUser(likeReq.GenerationOutputIDs, user.ID, likeReq.Action)
+	if err != nil {
+		log.Error("Error setting outputs liked for user", "err", err)
+		responses.ErrInternalServerError(w, r, "An unknown error has occurred")
+		return
+	}
+
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, map[string]interface{}{
+		"success": true,
 	})
 }

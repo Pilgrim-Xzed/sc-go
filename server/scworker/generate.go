@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -174,7 +173,7 @@ func (w *SCWorker) CreateGeneration(source enttypes.SourceType,
 			}
 			// Verify exists in bucket
 			_, err := w.S3.HeadObject(&s3.HeadObjectInput{
-				Bucket: aws.String(os.Getenv("S3_IMG2IMG_BUCKET_NAME")),
+				Bucket: aws.String(utils.GetEnv().S3Img2ImgBucketName),
 				Key:    aws.String(signedInitImageUrl),
 			})
 			if err != nil {
@@ -191,7 +190,7 @@ func (w *SCWorker) CreateGeneration(source enttypes.SourceType,
 			}
 			// Sign object URL to pass to worker
 			req, _ := w.S3.GetObjectRequest(&s3.GetObjectInput{
-				Bucket: aws.String(os.Getenv("S3_IMG2IMG_BUCKET_NAME")),
+				Bucket: aws.String(utils.GetEnv().S3Img2ImgBucketName),
 				Key:    aws.String(signedInitImageUrl),
 			})
 			urlStr, err := req.Presign(5 * time.Minute)
@@ -212,6 +211,7 @@ func (w *SCWorker) CreateGeneration(source enttypes.SourceType,
 	if err != nil {
 		log.Warn("Error getting queue count", "err", err, "user_id", user.ID.String())
 	}
+
 	if err == nil && nq > qMax {
 		// Get queue overflow size
 		overflowSize, err := w.QueueThrottler.NumQueued(fmt.Sprintf("of:%s", user.ID.String()))
@@ -243,6 +243,7 @@ func (w *SCWorker) CreateGeneration(source enttypes.SourceType,
 			overflowSize++
 		}
 	}
+
 
 	// Enforce submit to gallery
 	if free {
@@ -317,94 +318,98 @@ func (w *SCWorker) CreateGeneration(source enttypes.SourceType,
 			return err
 		}
 
-		nsfwModerationAPIResultChan := make(chan bool)
-		bannedPromptResultChan := make(chan bool)
-		errChan := make(chan error)
+		// nsfwModerationAPIResultChan := make(chan bool)
+		// bannedPromptResultChan := make(chan bool)
+		// errChan := make(chan error)
 
-		// Goroutine to check NSFW
-		go func() {
-			isNSFW, reason, score, err := w.SafetyChecker.IsPromptNSFW(translatedPrompt)
-			if err != nil {
-				log.Error("Error checking prompt NSFW", "err", err)
-				errChan <- err
-				return
-			}
-			if isNSFW {
-				w.Track.GenerationFailedNSFWPrompt(
-					user,
-					requests.BaseCogRequest{
-						Prompt: generateReq.Prompt,
-					},
-					"Moderation API",
-					source,
-					translatedPrompt,
-					"",
-					0.0,
-					reason,
-					score,
-					ipAddress,
-				)
-				errChan <- fmt.Errorf("nsfw: %s", reason)
-				return
-			}
-			nsfwModerationAPIResultChan <- true
-		}()
+		// fmt.Println("NSFW checks...")
 
-		// Goroutine to check banned embedding
-		if clipSvc != nil {
-			go func() {
-				embedding, err := clipSvc.GetEmbeddingFromText(translatedPrompt, 3, false)
-				if err != nil {
-					log.Error("Error fetching embedding", "err", err)
-					errChan <- err
-					return
-				}
-				bannedMatches, err := w.Repo.IsBannedPromptEmbedding(embedding, DB)
-				if err != nil {
-					log.Error("Error checking banned embedding", "err", err)
-					errChan <- err
-					return
-				}
-				if len(bannedMatches) > 0 {
-					w.Track.GenerationFailedNSFWPrompt(
-						user,
-						requests.BaseCogRequest{
-							Prompt: generateReq.Prompt,
-						},
-						"Banned Prompt Embedding",
-						source,
-						translatedPrompt,
-						bannedMatches[0].ID.String(),
-						float64(bannedMatches[0].Similarity),
-						"",
-						0,
-						ipAddress,
-					)
-					errChan <- fmt.Errorf("nsfw: %s", "sexual_minors")
-					return
-				}
-				bannedPromptResultChan <- true
-			}()
-		}
+		// // Goroutine to check NSFW
+		// go func() {
+		// 	isNSFW, reason, score, err := w.SafetyChecker.IsPromptNSFW(translatedPrompt)
+		// 	if err != nil {
+		// 		log.Error("Error checking prompt NSFW", "err", err)
+		// 		errChan <- err
+		// 		return
+		// 	}
+		// 	if isNSFW {
+		// 		w.Track.GenerationFailedNSFWPrompt(
+		// 			user,
+		// 			requests.BaseCogRequest{
+		// 				Prompt: generateReq.Prompt,
+		// 			},
+		// 			"Moderation API",
+		// 			source,
+		// 			translatedPrompt,
+		// 			"",
+		// 			0.0,
+		// 			reason,
+		// 			score,
+		// 			ipAddress,
+		// 		)
+		// 		errChan <- fmt.Errorf("nsfw: %s", reason)
+		// 		return
+		// 	}
+		// 	nsfwModerationAPIResultChan <- true
+		// }()
 
-		// Wait for either of the two to complete successfully or fail
-		nsfwModerationAPIDone, bannedPromptDone := false, clipSvc == nil // If clipSvc is nil, mark bannedPromptDone as true
-		for !(nsfwModerationAPIDone && bannedPromptDone) {
-			select {
-			case <-nsfwModerationAPIResultChan:
-				nsfwModerationAPIDone = true
-			case <-bannedPromptResultChan:
-				bannedPromptDone = true
-			case err := <-errChan:
-				return err
-			}
-		}
+		// // Goroutine to check banned embedding
+		// if clipSvc != nil {
+		// 	go func() {
+		// 		embedding, err := clipSvc.GetEmbeddingFromText(translatedPrompt, 3, false)
+		// 		if err != nil {
+		// 			log.Error("Error fetching embedding", "err", err)
+		// 			errChan <- err
+		// 			return
+		// 		}
+		// 		bannedMatches, err := w.Repo.IsBannedPromptEmbedding(embedding, DB)
+		// 		if err != nil {
+		// 			log.Error("Error checking banned embedding", "err", err)
+		// 			errChan <- err
+		// 			return
+		// 		}
+		// 		if len(bannedMatches) > 0 {
+		// 			w.Track.GenerationFailedNSFWPrompt(
+		// 				user,
+		// 				requests.BaseCogRequest{
+		// 					Prompt: generateReq.Prompt,
+		// 				},
+		// 				"Banned Prompt Embedding",
+		// 				source,
+		// 				translatedPrompt,
+		// 				bannedMatches[0].ID.String(),
+		// 				float64(bannedMatches[0].Similarity),
+		// 				"",
+		// 				0,
+		// 				ipAddress,
+		// 			)
+		// 			errChan <- fmt.Errorf("nsfw: %s", "sexual_minors")
+		// 			return
+		// 		}
+		// 		bannedPromptResultChan <- true
+		// 	}()
+		// }
+
+		// // Wait for either of the two to complete successfully or fail
+		// nsfwModerationAPIDone, bannedPromptDone := false, clipSvc == nil // If clipSvc is nil, mark bannedPromptDone as true
+		// for !(nsfwModerationAPIDone && bannedPromptDone) {
+		// 	select {
+		// 	case <-nsfwModerationAPIResultChan:
+		// 		nsfwModerationAPIDone = true
+		// 	case <-bannedPromptResultChan:
+		// 		bannedPromptDone = true
+		// 	case err := <-errChan:
+		// 		return err
+		// 	}
+		// }
 
 		remainingCredits, err = w.Repo.GetNonExpiredCreditTotalForUser(user.ID, DB)
 		if err != nil {
 			log.Error("Error getting remaining credits", "err", err)
 			return err
 		}
+
+		fmt.Println("remainingCredits", remainingCredits)
 
 		// Create generation
 		g, err := w.Repo.CreateGeneration(
@@ -428,6 +433,9 @@ func (w *SCWorker) CreateGeneration(source enttypes.SourceType,
 		// message_id in amqp
 		queueId = utils.Sha256(requestId.String())
 
+		fmt.Println("queueId", queueId)
+		fmt.Println("requestId", requestId)
+
 		// For live page update
 		livePageMsg = shared.LivePageMessage{
 			ProcessType:      shared.GENERATE,
@@ -441,10 +449,11 @@ func (w *SCWorker) CreateGeneration(source enttypes.SourceType,
 			ProductID:        user.ActiveProductID,
 			Source:           source,
 		}
+		fmt.Println("livePageMsg", livePageMsg)
 
 		cogReqBody = requests.CogQueueRequest{
 			WebhookEventsFilter: []requests.CogEventFilter{requests.CogEventFilterStart, requests.CogEventFilterStart},
-			WebhookUrl:          fmt.Sprintf("%s/v1/worker/webhook", utils.GetEnv("PUBLIC_API_URL", "")),
+			WebhookUrl:          fmt.Sprintf("%s/v1/worker/webhook", utils.GetEnv().PublicApiUrl),
 			Input: requests.BaseCogRequest{
 				SkipSafetyChecker:      true,
 				SkipTranslation:        true,
@@ -478,6 +487,10 @@ func (w *SCWorker) CreateGeneration(source enttypes.SourceType,
 			},
 		}
 
+		
+		fmt.Println("cogReqBody", cogReqBody)
+
+
 		if source == enttypes.SourceTypeWebUI {
 			cogReqBody.Input.UIId = generateReq.UIId
 			cogReqBody.Input.StreamID = generateReq.StreamID
@@ -487,7 +500,7 @@ func (w *SCWorker) CreateGeneration(source enttypes.SourceType,
 			cogReqBody.Input.InitImageUrlS3 = generateReq.InitImageUrl
 		}
 
-		_, err = w.Repo.AddToQueueLog(queueId, int(queuePriority), nil)
+		_, err = w.Repo.AddToQueueLog(queueId, int(queuePriority), DB)
 		if err != nil {
 			log.Error("Error adding to queue log", "err", err)
 			return err
@@ -667,8 +680,8 @@ func (w *SCWorker) CreateGeneration(source enttypes.SourceType,
 				resOutputs := make([]responses.ApiOutput, len(outputs))
 				for i, output := range outputs {
 					resOutputs[i] = responses.ApiOutput{
-						URL:      utils.GetURLFromImagePath(output.ImagePath),
-						ImageURL: utils.ToPtr(utils.GetURLFromImagePath(output.ImagePath)),
+						URL:      utils.GetEnv().GetURLFromImagePath(output.ImagePath),
+						ImageURL: utils.ToPtr(utils.GetEnv().GetURLFromImagePath(output.ImagePath)),
 						ID:       output.ID,
 					}
 				}

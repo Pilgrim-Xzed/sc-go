@@ -15,6 +15,15 @@ spec:
       labels:
         app: sc-lingua
     spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: agentpool
+                    operator: In
+                    values:
+                      - a100
       containers:
         - name: sc-lingua
           image: replaceme
@@ -40,11 +49,13 @@ spec:
                 name: sc-go
           env:
             - name: PUBLIC_SUPABASE_REFERENCE_ID
-              value: ripcxiducccfionzyaqr
+              value: jaqefzjqokaemzyvjcew
             - name: PRODUCTION
               value: "true"
+            - name: PORT
+              value: "13339"
             - name: BUCKET_BASE_URL
-              value: stablecog-gwhbg5cwgmgghtcp.z01.azurefd.net
+              value: https://b.stablecog.com
             - name: PUBLIC_API_URL
               value: https://api.stablecog.com
             - name: STRIPE_STARTER_PRODUCT_ID
@@ -71,5 +82,3 @@ spec:
               value: price_1Mr4aEATa0ehBYTAalXOVpeg
             - name: STRIPE_MEGA_PACK_PRODUCT_ID
               value: prod_NcJCespFpjjQJj
-      imagePullSecrets:
-        - name: akscr
