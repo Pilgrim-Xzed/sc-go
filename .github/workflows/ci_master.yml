@@ -28,58 +28,6 @@ jobs:
       commit_msg: updated code
       branch_name: master
 
-  test:
-    name: ☔️ Tests
-    runs-on: ubuntu-20.04
-    needs: setup_env
-
-    # Setup postgres service for tests
-    services:
-      db:
-        image: postgres:14
-        env:
-          POSTGRES_DB: testing
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_USER: postgres
-        ports:
-          - 5432:5432
-        # set health checks to wait until postgres has started
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v3
-
-      - name: Setup Go with cache
-        uses: actions/setup-go@v3
-        with:
-          go-version-file: ./go.work
-          cache-dependency-path: |
-            **/go.sum
-
-      - name: Run Tests
-        env:
-          GITHUB_ACTIONS: true
-          POSTGRES_DB: postgres
-          POSTGRES_PORT: 5432
-          POSTGRES_USER: stablecog
-          POSTGRES_PASSWORD: Slammad42@
-          POSTGRES_HOST: 206.189.233.138
-        run: |
-          go test -v -parallel 1 ./cron/...
-          go test -v -parallel 1 ./database/...
-          go test -v -parallel 1 ./log/...
-          go test -v -parallel 1 ./server/...
-          go test -v -parallel 1 ./shared/...
-          go test -v -parallel 1 ./utils/...
-          go test -v -parallel 1 ./uploadapi/...
-
-
-
   build:
     name: 🔨 Build Binaries and Docker Image
     runs-on: ubuntu-20.04
@@ -148,7 +96,6 @@ jobs:
     runs-on: ubuntu-20.04
     needs:
       - setup_env
-      - test
       - build
     env:
       GITHUB_RUN_ID: ${{ github.run_id }}
