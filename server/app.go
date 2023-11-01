@@ -1046,7 +1046,7 @@ func main() {
 	}()
 
 	// Start server
-	port := "13337"
+	port := 13337
 	log.Info("Starting server", "port", port)
 
 	h2s := &http2.Server{}

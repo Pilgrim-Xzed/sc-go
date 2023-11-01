@@ -196,7 +196,7 @@ func main() {
 	s.StartAsync()
 
 	// Start server
-	port := "9096"
+	port := 9096
 	log.Info("Starting Auth server", "port", port)
 
 	h2s := &http2.Server{}
